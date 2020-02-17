@@ -58,8 +58,8 @@ Triangle::Triangle(){
     V.clear();
 }
 
-Triangle::Triangle(int index, VerticeWithCompared* V1, VerticeWithCompared* V2, VerticeWithCompared* V3){
-    fatherInd = 0;
+Triangle::Triangle(int index, VerticeWithCompared* V1, VerticeWithCompared* V2, VerticeWithCompared* V3, int fatherIndex){
+    fatherInd = fatherIndex;
     this->index = index;
     V.push_back(V1);
     V.push_back(V2);
@@ -133,9 +133,10 @@ void Triangulation::zeroMeshCreator(double r)
 {
     this->setRad(r);
     const float H_ANGLE = pi / 180 * 72;
-    const float V_ANGLE = atanf(1.0f / 2);
+    const float V_ANGLE = atan(1.0 / 2);
     this->vert_arr.clear();
-    this->vert_arr.resize(12);
+    VerticeWithCompared tre = {};
+    this->vert_arr.resize(12, tre);
     float z, xy;
     float hAngle1 = -pi / 2 - H_ANGLE / 2;
     float hAngle2 = -pi / 2;
@@ -151,19 +152,19 @@ void Triangulation::zeroMeshCreator(double r)
         z = this->r * sin(V_ANGLE);
         xy = this->r * cos(V_ANGLE);
         
-        this->vert_arr[i].x = xy * cosf(hAngle1);
+        this->vert_arr[i].x = xy * cos(hAngle1);
         
-        this->vert_arr[i+5].x = xy * cosf(hAngle2);
+        this->vert_arr[i+5].x = xy * cos(hAngle2);
         
-        this->vert_arr[i].y = xy * sinf(hAngle1);
+        this->vert_arr[i].y = xy * sin(hAngle1);
         
-        this->vert_arr[i+5].y = xy * sinf(hAngle2);
+        this->vert_arr[i+5].y = xy * sin(hAngle2);
         
         this->vert_arr[i].z = z;
         
         this->vert_arr[i+5].z = -z;
         
-        this->vert_arr[i].toSph();
+        this->vert_arr.at(i).toSph();
         this->vert_arr[i+5].toSph();
         this->vert_arr[i].index = i;
         this->vert_arr[i+5].index = i+5;
@@ -186,7 +187,7 @@ void Triangulation::zeroMeshCreator(double r)
     //    this->vert_arr[j].U = pc.potential(this->vert_arr[j].r, this->vert_arr[j].theta - pi/2, this->vert_arr[j].fi - pi);
     //}
     
-    //this->zero_triangles();
+    this->zero_triangles();
 }
 
 vector<VerticeWithCompared> Triangulation::closestVerticesFinder(VerticeWithCompared V, vector<VerticeWithCompared> tmpVertices, int mode){
@@ -243,11 +244,11 @@ VerticeWithCompared Triangulation::verticeCreator(VerticeWithCompared V1, Vertic
 }
 
 bool Triangulation::vertDetector(VerticeWithCompared V){
+    //return true;
     for(int i = 0; i < this->vert_arr.size(); i++){
-        if(V.x == this->vert_arr[i].x &&
-           V.y == this->vert_arr[i].y &&
-           V.z == this->vert_arr[i].z){
-            //this->localVIndex = i;
+        double dist = distCounter(V, vert_arr[i]);
+        if(dist < 1){
+            this->localVIndex = i;
             return false;
         }
     }
@@ -274,102 +275,62 @@ void Triangulation::triangledetector(Triangle* tr, vector<Triangle> trArr){
     }
 }
 
-vector<Triangle> Triangulation::trCreator(Triangle* fthrTr, VerticeWithCompared* V1, VerticeWithCompared* V2, VerticeWithCompared* V3){
+vector<Triangle> Triangulation::trCreator(Triangle* fthrTr, VerticeWithCompared** V){
     vector<Triangle> newTr;
-    Triangle tr1 = Triangle(this->globalIndex + 1, fthrTr->V[0], V1, V2);
-    tr1.fatherInd = fthrTr->index;
+    Triangle tr1 = Triangle(this->globalIndex + 1, fthrTr->V[0], V[0], V[2], fthrTr->index);
+    
+    Triangle tr2 = Triangle(this->globalIndex + 2, fthrTr->V[1], V[0], V[1], fthrTr->index);
+    
+    Triangle tr3 = Triangle(this->globalIndex + 3, fthrTr->V[2], V[1], V[2], fthrTr->index);
+    
+    Triangle tr4 = Triangle(this->globalIndex + 4, V[0], V[1], V[2], fthrTr->index);
+    
     fthrTr->childInd.push_back(tr1.index);
-    newTr.push_back(tr1);
-    
-    Triangle tr2 = Triangle(this->globalIndex + 2, V1, fthrTr->V[1], V3);
-    tr2.fatherInd = fthrTr->index;
     fthrTr->childInd.push_back(tr2.index);
-    newTr.push_back(tr2);
-    
-    Triangle tr3 = Triangle(this->globalIndex + 3, V2, V3, fthrTr->V[2]);
-    tr3.fatherInd = fthrTr->index;
     fthrTr->childInd.push_back(tr3.index);
-    newTr.push_back(tr3);
-    
-    Triangle tr4 = Triangle(this->globalIndex + 4, V1, V2, V3);
-    tr4.fatherInd = fthrTr->index;
     fthrTr->childInd.push_back(tr4.index);
+    newTr.push_back(tr1);
+    newTr.push_back(tr2);
+    newTr.push_back(tr3);
     newTr.push_back(tr4);
     
     fthrTr->isDone = true;
     this->globalIndex = this->globalIndex + 4;
     return newTr;
 }
-/*
+
 void Triangulation::mesher(double r, int degree){
     this->zeroMeshCreator(r);
+    vector<vector<Triangle>> all_triangles;
+    all_triangles.push_back(tr_arr);
     for(int iter = 1; iter <= degree; iter++)
     {
-        vector<VerticeWithCompared> tmpVertices = this->vert_arr;
-        //vector<Triangle> tmpTriangles = this->tr_arr;
-        
-        for(int j = 0; j < tmpVertices.size(); j++){
-        vector<VerticeWithCompared> closestVertices = closestVerticesFinder(tmpVertices[j], tmpVertices, 0);
-            for(int l = 0; l < closestVertices.size(); l++){
-                vector<VerticeWithCompared> thirdVertice = closestVerticesFinder(closestVertices[l], closestVertices, 1);
-                for(int i = 0; i < thirdVertice.size(); i++){
-                    Triangle tmpTr = Triangle(0, &tmpVertices[j], &closestVertices[l], &thirdVertice[i]);
-                    
-                    VerticeWithCompared V1 = verticeCreator(tmpVertices[j], closestVertices[l]);
-                    VerticeWithCompared* V1Ind;
-                    VerticeWithCompared V2 = verticeCreator(tmpVertices[j], thirdVertice[i]);
-                    VerticeWithCompared* V2Ind;
-                    VerticeWithCompared V3 = verticeCreator(closestVertices[l], thirdVertice[i]);
-                    VerticeWithCompared* V3Ind;
-                    
-                    if(vertDetector(V1)){
-                        V1.index = this->vIndex;
-                        this->vIndex += 1;
-                        this->vert_arr.push_back(V1);
-                        V1Ind = &this->vert_arr[V1.index];
-                    }
-                    else{
-                        V1Ind = &this->vert_arr[localVIndex];
-                    }
-                    
-                    if(vertDetector(V2)){
-                        V2.index = this->vIndex;
-                        this->vIndex += 1;
-                        this->vert_arr.push_back(V2);
-                        V2Ind = &this->vert_arr[V2.index];
-                    }
-                    else{
-                        V2Ind = &this->vert_arr[localVIndex];
-                    }
-                    
-                    if(vertDetector(V3)){
-                        V3.index = this->vIndex;
-                        this->vIndex += 1;
-                        this->vert_arr.push_back(V3);
-                        V3Ind = &this->vert_arr[V3.index];
-                    }
-                    else{
-                        V3Ind = &this->vert_arr[localVIndex];
-                    }
-                    
-                    //Triangle* fthrTr;
-                    triangledetector(&tmpTr, this->tr_arr);
-                    //if(fthrTr->V.size() != 3) { cout<<"no such triangle\n"; }
-                    
-                    if(this->tr_arr[localTrIndex].isDone == false){
-                        vector<Triangle> newTriangles = trCreator(&this->tr_arr[localTrIndex], V1Ind, V2Ind, V3Ind);
-                        //tmpTriangles[this->localTrIndex] = this->tr_arr[localTrIndex];
-                        //this->tr_arr[this->localTrIndex] = fthrTr;
-                        for(int h=0; h<4; h++){
-                            this->tr_arr.push_back(newTriangles[h]);
-                        }
-                    }
+        all_triangles.push_back(vector<Triangle>());
+        for (int tr_num = 0; tr_num < all_triangles[iter-1].size(); tr_num++)
+        {
+            Triangle& t = all_triangles[iter-1][tr_num];
+            VerticeWithCompared Vs[3] = {};
+            VerticeWithCompared* Vptrs[3] = {};
+            for (int idx = 0; idx < 3; idx ++) {
+                Vs[idx] = verticeCreator(*t.V[idx % 3], *t.V[(idx + 1) % 3]);
+                if(vertDetector(Vs[idx])){
+                    Vs[idx].index = this->vIndex;
+                    this->vIndex += 1;
+                    this->vert_arr.push_back(Vs[idx]);
+                    Vptrs[idx] = &this->vert_arr[Vs[idx].index];
+                }
+                else{
+                    Vptrs[idx] = &this->vert_arr[localVIndex];
                 }
             }
+            auto newTriangles = trCreator(&t, Vptrs);
+            //all_triangles[iter].insert(all_triangles[iter].end(), newTriangles.begin(), newTriangles.end());
+                
         }
+        //tr_arr.insert(tr_arr.end(), all_triangles[iter].begin(), all_triangles[iter].end());
     }
 }
-*/
+
 
 
 

@@ -40,7 +40,7 @@ class Triangle
 {
 public: vector<int> childInd ;
         Triangle();
-        Triangle(int index, VerticeWithCompared* V1, VerticeWithCompared* V2, VerticeWithCompared* V3);
+        Triangle(int index, VerticeWithCompared* V1, VerticeWithCompared* V2, VerticeWithCompared* V3, int fatherIndex = -1);
         int index;
         int fatherInd;
         bool isDone = false;
@@ -63,6 +63,7 @@ public:
     int globalIndex;
     int localVIndex;
     int localTrIndex;
+    void mesher(double r, int degree);
     void mesherDot(double r, int degree);
     vector<VerticeWithCompared> vert_arr;
     vector<Triangle> tr_arr;
@@ -70,7 +71,7 @@ public:
     VerticeWithCompared verticeCreator(VerticeWithCompared V1, VerticeWithCompared V2);
     bool vertDetector(VerticeWithCompared V);
     void triangledetector(Triangle* tr, vector<Triangle> trArr);
-    vector<Triangle> trCreator(Triangle* fthrTr, VerticeWithCompared* V1, VerticeWithCompared* V2, VerticeWithCompared* V3);
+    vector<Triangle> trCreator(Triangle* fthrTr, VerticeWithCompared** V);
     //void map(int degree, double r);
     void globalMapDot(int degree, int polynomDegree, int maxRad, int step);
 };
