@@ -72,7 +72,7 @@ public:
     bool vertDetector(VerticeWithCompared V);
     void triangledetector(Triangle* tr, vector<Triangle> trArr);
     vector<Triangle> trCreator(Triangle* fthrTr, VerticeWithCompared** V);
-    //void map(int degree, double r);
+    void map(int degree, double r);
     void globalMapDot(int degree, int polynomDegree, int maxRad, int step);
 };
 

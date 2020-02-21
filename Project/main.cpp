@@ -14,7 +14,7 @@
 
 int main(int argc, const char * argv[]) {
     Triangulation tr = {};
-    tr.mesher(r0, 1);
+    tr.mesher(r0, 2);
     
     //for(int i=0; i<tr.vert_arr.size(); i++){
     //    cout<<tr.vert_arr[i].r<<" "<<tr.vert_arr[i].theta<<" "<<tr.vert_arr[i].fi<<" "<<tr.vert_arr[i].U<<endl;
@@ -23,7 +23,7 @@ int main(int argc, const char * argv[]) {
     //tr.globalMapDot(1, 100, r0+100, 100);
     //tr.zeroMeshCreator(7000000);
     for(int i=0; i<tr.tr_arr.size(); i++){
-        cout<<tr.tr_arr[i].index<<" fthr: "<<tr.tr_arr[i].fatherInd<<" "<<tr.tr_arr[i].V[0]<<" "<<tr.tr_arr[i].V[1]->index<<" "<<tr.tr_arr[i].V[2]->index<<" "<<endl;
+        cout<<tr.tr_arr[i].index<<" fthr: "<<tr.tr_arr[i].fatherInd<<" "<<tr.tr_arr[i].V[0]->index<<" "<<tr.tr_arr[i].V[1]->index<<" "<<tr.tr_arr[i].V[2]->index<<" "<<endl;
     //    cout<<tr.tr_arr[i].index<<" "<<tr.tr_arr[i].V[0]->theta
     //                            <<" "<<tr.tr_arr[i].V[1]->theta
     //                            <<" "<<tr.tr_arr[i].V[2]->theta<<" "<<endl;

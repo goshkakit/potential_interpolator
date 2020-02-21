@@ -70,7 +70,7 @@ bool Triangle::operator==(const Triangle &tr) const{
     bool eq = false;
     for(int i=0; i<this->V.size(); i++){
         for(int j=0; j<tr.V.size(); j++){
-            if(this->V[i]->index == tr.V[j]->index){
+            if(this->V.at(i)->index == tr.V.at(j)->index){
                 eq = true;
                 break;
             }
@@ -96,34 +96,34 @@ void Triangulation::zero_triangles(){
     this->tr_arr.clear();
     //1-4
     for(int i=0; i<4; i++){
-        Triangle tr = Triangle(i, &vert_arr[0], &vert_arr[i+1], &vert_arr[i+2]);
+        Triangle tr = Triangle(i, &vert_arr.at(0), &vert_arr.at(i+1), &vert_arr.at(i+2));
         this->tr_arr.push_back(tr);
     }
     //5
-    Triangle tr5 = Triangle(4, &vert_arr[0], &vert_arr[5], &vert_arr[1]);
+    Triangle tr5 = Triangle(4, &vert_arr.at(0), &vert_arr.at(5), &vert_arr.at(1));
     this->tr_arr.push_back(tr5);
     //6,8,10,12
     for(int i=1; i<5; i++){
-        Triangle tr = Triangle(i+4, &vert_arr[i], &vert_arr[i+1], &vert_arr[i+5]);
+        Triangle tr = Triangle(i+4, &vert_arr.at(i), &vert_arr.at(i+1), &vert_arr.at(i+5));
         this->tr_arr.push_back(tr);
     }
     //7,9,11,13
     for(int i=2; i<6; i++){
-        Triangle tr = Triangle(i+7, &vert_arr[i], &vert_arr[i+4], &vert_arr[i+5]);
+        Triangle tr = Triangle(i+7, &vert_arr.at(i), &vert_arr.at(i+4), &vert_arr.at(i+5));
         this->tr_arr.push_back(tr);
     }
     //14-15
     for(int i = 5; i<=6; i++){
-        Triangle tr = Triangle(i+8, &vert_arr[i], &vert_arr[10], &vert_arr[1]);
+        Triangle tr = Triangle(i+8, &vert_arr.at(i), &vert_arr.at(10), &vert_arr.at(1));
         this->tr_arr.push_back(tr);
     }
     //16-19
     for(int i=6; i<10; i++){
-        Triangle tr = Triangle(i+9, &vert_arr[11], &vert_arr[i], &vert_arr[i+1]);
+        Triangle tr = Triangle(i+9, &vert_arr.at(11), &vert_arr.at(i), &vert_arr.at(i+1));
         this->tr_arr.push_back(tr);
        }
     //20
-    Triangle tr20 = Triangle(19, &vert_arr[11], &vert_arr[10], &vert_arr[6]);
+    Triangle tr20 = Triangle(19, &vert_arr.at(11), &vert_arr.at(10), &vert_arr.at(6));
     this->tr_arr.push_back(tr20);
     
     this->globalIndex=19;
@@ -202,10 +202,9 @@ vector<VerticeWithCompared> Triangulation::closestVerticesFinder(VerticeWithComp
     }
     else{
         for(int i = 0; i < 12; i++){
-            
-            if(V.x == tmpVertices[i].x &&
-               V.y == tmpVertices[i].y &&
-               V.z == tmpVertices[i].z){
+            if(V.x == tmpVertices.at(i).x &&
+               V.y == tmpVertices.at(i).y &&
+               V.z == tmpVertices.at(i).z){
                 verticesNum = 5;
                 break;
             }
@@ -218,7 +217,7 @@ vector<VerticeWithCompared> Triangulation::closestVerticesFinder(VerticeWithComp
     sort(tmpVertices.begin(),tmpVertices.end());
     
     for(int k = 1; k <= verticesNum; k++){
-        closestVertices.push_back(tmpVertices[k]);
+        closestVertices.push_back(tmpVertices.at(k));
     }
     
     return closestVertices;
@@ -244,10 +243,9 @@ VerticeWithCompared Triangulation::verticeCreator(VerticeWithCompared V1, Vertic
 }
 
 bool Triangulation::vertDetector(VerticeWithCompared V){
-    //return true;
     for(int i = 0; i < this->vert_arr.size(); i++){
-        double dist = distCounter(V, vert_arr[i]);
-        if(dist < 1){
+        double dist = distCounter(V, this->vert_arr.at(i));
+        if(dist < 1){ //равенство координат?
             this->localVIndex = i;
             return false;
         }
@@ -257,15 +255,15 @@ bool Triangulation::vertDetector(VerticeWithCompared V){
 
 void Triangulation::triangledetector(Triangle* tr, vector<Triangle> trArr){
     for(int k=0; k<trArr.size(); k++){
-        if(*tr == trArr[k]){
+        if(*tr == trArr.at(k)){
             this->localTrIndex = k;
-            vector<int> indexes = {tr->V[0]->index, tr->V[1]->index, tr->V[2]->index};
-            vector<VerticeWithCompared*> tmpV = trArr[k].V;
-            trArr[k].V.clear();
+            vector<int> indexes = {tr->V.at(0)->index, tr->V.at(1)->index, tr->V.at(2)->index};
+            vector<VerticeWithCompared*> tmpV = trArr.at(k).V;
+            trArr.at(k).V.clear();
             for(int i=0; i<3; i++){
                 for(int j=0; j<3; j++){
-                    if(tmpV[j]->index == indexes[i]){
-                        trArr[k].V.push_back(tmpV[j]);
+                    if(tmpV.at(j)->index == indexes.at(i)){
+                        trArr.at(k).V.push_back(tmpV.at(j));
                         break;
                     }
                 }
@@ -306,28 +304,48 @@ void Triangulation::mesher(double r, int degree){
     for(int iter = 1; iter <= degree; iter++)
     {
         all_triangles.push_back(vector<Triangle>());
-        for (int tr_num = 0; tr_num < all_triangles[iter-1].size(); tr_num++)
+        for (int tr_num = 0; tr_num < all_triangles.at(iter-1).size(); tr_num++)
         {
-            Triangle& t = all_triangles[iter-1][tr_num];
+            Triangle& t = all_triangles.at(iter-1).at(tr_num);
             VerticeWithCompared Vs[3] = {};
             VerticeWithCompared* Vptrs[3] = {};
             for (int idx = 0; idx < 3; idx ++) {
-                Vs[idx] = verticeCreator(*t.V[idx % 3], *t.V[(idx + 1) % 3]);
+                Vs[idx] = verticeCreator(*t.V.at(idx % 3), *t.V.at((idx + 1) % 3));
                 if(vertDetector(Vs[idx])){
                     Vs[idx].index = this->vIndex;
                     this->vIndex += 1;
                     this->vert_arr.push_back(Vs[idx]);
-                    Vptrs[idx] = &this->vert_arr[Vs[idx].index];
+                    Vptrs[idx] = &this->vert_arr.at(Vs[idx].index);
                 }
                 else{
-                    Vptrs[idx] = &this->vert_arr[localVIndex];
+                    Vptrs[idx] = &this->vert_arr.at(localVIndex);
                 }
             }
-            auto newTriangles = trCreator(&t, Vptrs);
-            //all_triangles[iter].insert(all_triangles[iter].end(), newTriangles.begin(), newTriangles.end());
-                
+            
+            Triangle tr1 = Triangle(this->globalIndex + 1, t.V[0], Vptrs[0], Vptrs[2], t.index);
+           
+            Triangle tr2 = Triangle(this->globalIndex + 2, t.V[1], Vptrs[0], Vptrs[1], t.index);
+         
+            Triangle tr3 = Triangle(this->globalIndex + 3, t.V[2], Vptrs[1], Vptrs[2], t.index);
+            
+            Triangle tr4 = Triangle(this->globalIndex + 4, Vptrs[0], Vptrs[1], Vptrs[2], t.index);
+            
+            t.childInd.push_back(tr1.index);
+            t.childInd.push_back(tr2.index);
+            t.childInd.push_back(tr3.index);
+            t.childInd.push_back(tr4.index);
+            all_triangles.at(iter).insert(all_triangles.at(iter).end(), tr1);
+            all_triangles.at(iter).insert(all_triangles.at(iter).end(), tr2);
+            all_triangles.at(iter).insert(all_triangles.at(iter).end(), tr3);
+            all_triangles.at(iter).insert(all_triangles.at(iter).end(), tr4);
+            
+            t.isDone = true;
+            this->globalIndex = this->globalIndex + 4;
+            
+            //auto newTriangles = trCreator(&t, Vptrs);
+            //all_triangles.at(iter).insert(all_triangles.at(iter).end(), newTriangles.begin(), newTriangles.end());
         }
-        //tr_arr.insert(tr_arr.end(), all_triangles[iter].begin(), all_triangles[iter].end());
+        tr_arr.insert(tr_arr.end(), all_triangles.at(iter).begin(), all_triangles.at(iter).end());
     }
 }
 
@@ -369,7 +387,7 @@ void Triangulation::mesherDot(double r, int degree){
     }
 }
 
-/*
+
 void Triangulation::map(int degree, double r){
     PotentialCounter pc = {};
     pc.length = 100;
@@ -386,8 +404,8 @@ void Triangulation::map(int degree, double r){
     for (int j = 0; j < this->tr_arr.size(); j++)
     {
         for(int i=0; i<3; i++){
-            this->tr_arr[j].V[i]->U = pc.potential(this->tr_arr[j].V[i]->r, this->tr_arr[j].V[i]->theta - pi/2,
-                                                   this->tr_arr[j].V[i]->fi - pi);
+            //this->tr_arr[j].V[i]->U = pc.potential(this->tr_arr[j].V[i]->r, this->tr_arr[j].V[i]->theta - pi/2,
+            //                                       this->tr_arr[j].V[i]->fi - pi);
             infile<<this->tr_arr[j].V[i]->U<<" "<<this->tr_arr[j].V[i]->r<<" "<<this->tr_arr[j].V[i]->theta - pi/2<<" "<<
                     this->tr_arr[j].V[i]->fi - pi <<"\n";
         }
@@ -397,7 +415,7 @@ void Triangulation::map(int degree, double r){
     time(&end);
     printf("Completed in %f min\n", difftime(end, start)/60.0);
 }
-*/
+
 void Triangulation::globalMapDot(int degree, int polynomDegree, int maxRad, int step){
     PotentialCounter pc = {};
     pc.length = polynomDegree;
