@@ -26,21 +26,44 @@
 
 using namespace std;
 
-class Vertice_data
+class Vertice
 {
 public:
-    double U, r, theta, fi;
+    int index;
+    double U, r, theta, fi, x, y, z;
     void ReadFromStr(const char* str);
 };
 
-struct Extrapolation{
-    
-    
-    vector<Vertice_data> LoadFromFile(string filename);
-    
-    double distance(double theta, double fi, Vertice_data V);
-    double triangle_counter(vector<Vertice_data> vect, double theta, double fi);
-    double extrapolator(int deg, double r, double theta, double fi);
+class Tr
+{
+public:
+    int index, fatherInd;
+    vector<int> V = {-1, -1, -1};
+    vector<int> childInd = {-1, -1, -1, -1};
+    void ReadFromStr(const char* str);
+};
+
+class Extrapolation{
+public:
+    int stepRad;
+    double maxRad;
+    int trIdx;
+    int vertAm;
+    int trAm;
+    void stepSet(int step);
+    void radSet(double r);
+    void verticeLoader(string filename);
+    void triangleLoader(string filename);
+    vector<vector<Vertice>> vert_arr;
+    vector<Tr> tr_arr;
+    double sphDist(double theta, double fi, int idx, int rIdx);
+    void loader(int deg);
+    int zeroSearcher(int rIdx, double x, double y, double z);
+    int searcher(int fthrIdx, int rIdx, double x, double y, double z);
+    bool isInTr(int rIdx, int idx, double x, double y, double z);
+    double layerCounter(double theta, double fi, int trIdx, int rIdx);
+    double counter(double r, double theta, double fi, int tr, int rIdx);
+    double extrapolator(double r, double theta, double fi);
 };
 
 #endif /* Extrapolation_hpp */

@@ -22,10 +22,12 @@ void VerticeWithCompared::toSph()
     this->theta = acos(this->z/sqrt(this->x * this->x +
                                     this->y * this->y +
                                     this->z * this->z));
-    if(this->x == 0 && this->y == 0){
+    if(this->x == 0 && this->y == 0)
         this->fi = 0;
-    }
-    else if(this->x == 0 && this->y < 0){
+    else
+        this->fi = atan2(this->y, this->x);
+      /*
+        if(this->x == 0 && this->y < 0){
         this->fi = 3*pi/2;
     }
     else if(this->x == 0 && this->y > 0){
@@ -46,6 +48,7 @@ void VerticeWithCompared::toSph()
     else if(this->x > 0 && this->y < 0){
         this->fi = 2*pi+atan(this->y/this->x);
     }
+       */
 }
 
 bool VerticeWithCompared::operator<(const VerticeWithCompared &rht) const{
@@ -61,6 +64,14 @@ Triangle::Triangle(){
 Triangle::Triangle(int index, VerticeWithCompared* V1, VerticeWithCompared* V2, VerticeWithCompared* V3, int fatherIndex){
     fatherInd = fatherIndex;
     this->index = index;
+    V.push_back(V1->index);
+    V.push_back(V2->index);
+    V.push_back(V3->index);
+}
+
+Triangle::Triangle(int index, int V1, int V2,int V3, int fatherIndex){
+    fatherInd = fatherIndex;
+    this->index = index;
     V.push_back(V1);
     V.push_back(V2);
     V.push_back(V3);
@@ -70,7 +81,7 @@ bool Triangle::operator==(const Triangle &tr) const{
     bool eq = false;
     for(int i=0; i<this->V.size(); i++){
         for(int j=0; j<tr.V.size(); j++){
-            if(this->V.at(i)->index == tr.V.at(j)->index){
+            if(this->V.at(i) == tr.V.at(j)){
                 eq = true;
                 break;
             }
@@ -179,14 +190,6 @@ void Triangulation::zeroMeshCreator(double r)
     this->vert_arr[11].toSph();
     this->vert_arr[11].index = 11;
     this->vIndex=12;
-    
-    //PotentialCounter pc = {};
-    //pc.length = this->polynomDeg;
-    //pc.LoadFromFile("/Users/georgij/С++/Project/Project/data.txt");
-    //for(int j=0; j<12; j++){
-    //    this->vert_arr[j].U = pc.potential(this->vert_arr[j].r, this->vert_arr[j].theta - pi/2, this->vert_arr[j].fi - pi);
-    //}
-    
     this->zero_triangles();
 }
 
@@ -244,8 +247,9 @@ VerticeWithCompared Triangulation::verticeCreator(VerticeWithCompared V1, Vertic
 
 bool Triangulation::vertDetector(VerticeWithCompared V){
     for(int i = 0; i < this->vert_arr.size(); i++){
-        double dist = distCounter(V, this->vert_arr.at(i));
-        if(dist < 1){ //равенство координат?
+        if(this->vert_arr.at(i).x == V.x &&
+           this->vert_arr.at(i).y == V.y &&
+           this->vert_arr.at(i).z == V.z ){
             this->localVIndex = i;
             return false;
         }
@@ -253,54 +257,11 @@ bool Triangulation::vertDetector(VerticeWithCompared V){
     return true;
 }
 
-void Triangulation::triangledetector(Triangle* tr, vector<Triangle> trArr){
-    for(int k=0; k<trArr.size(); k++){
-        if(*tr == trArr.at(k)){
-            this->localTrIndex = k;
-            vector<int> indexes = {tr->V.at(0)->index, tr->V.at(1)->index, tr->V.at(2)->index};
-            vector<VerticeWithCompared*> tmpV = trArr.at(k).V;
-            trArr.at(k).V.clear();
-            for(int i=0; i<3; i++){
-                for(int j=0; j<3; j++){
-                    if(tmpV.at(j)->index == indexes.at(i)){
-                        trArr.at(k).V.push_back(tmpV.at(j));
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-    }
-}
-
-vector<Triangle> Triangulation::trCreator(Triangle* fthrTr, VerticeWithCompared** V){
-    vector<Triangle> newTr;
-    Triangle tr1 = Triangle(this->globalIndex + 1, fthrTr->V[0], V[0], V[2], fthrTr->index);
-    
-    Triangle tr2 = Triangle(this->globalIndex + 2, fthrTr->V[1], V[0], V[1], fthrTr->index);
-    
-    Triangle tr3 = Triangle(this->globalIndex + 3, fthrTr->V[2], V[1], V[2], fthrTr->index);
-    
-    Triangle tr4 = Triangle(this->globalIndex + 4, V[0], V[1], V[2], fthrTr->index);
-    
-    fthrTr->childInd.push_back(tr1.index);
-    fthrTr->childInd.push_back(tr2.index);
-    fthrTr->childInd.push_back(tr3.index);
-    fthrTr->childInd.push_back(tr4.index);
-    newTr.push_back(tr1);
-    newTr.push_back(tr2);
-    newTr.push_back(tr3);
-    newTr.push_back(tr4);
-    
-    fthrTr->isDone = true;
-    this->globalIndex = this->globalIndex + 4;
-    return newTr;
-}
-
 void Triangulation::mesher(double r, int degree){
     this->zeroMeshCreator(r);
     vector<vector<Triangle>> all_triangles;
     all_triangles.push_back(tr_arr);
+    tr_arr.clear();
     for(int iter = 1; iter <= degree; iter++)
     {
         all_triangles.push_back(vector<Triangle>());
@@ -308,17 +269,17 @@ void Triangulation::mesher(double r, int degree){
         {
             Triangle& t = all_triangles.at(iter-1).at(tr_num);
             VerticeWithCompared Vs[3] = {};
-            VerticeWithCompared* Vptrs[3] = {};
+            int Vptrs[3] = {};
             for (int idx = 0; idx < 3; idx ++) {
-                Vs[idx] = verticeCreator(*t.V.at(idx % 3), *t.V.at((idx + 1) % 3));
+                Vs[idx] = verticeCreator(this->vert_arr.at(t.V.at(idx % 3)), this->vert_arr.at(t.V.at((idx + 1) % 3)));
                 if(vertDetector(Vs[idx])){
                     Vs[idx].index = this->vIndex;
                     this->vIndex += 1;
                     this->vert_arr.push_back(Vs[idx]);
-                    Vptrs[idx] = &this->vert_arr.at(Vs[idx].index);
+                    Vptrs[idx] = Vs[idx].index;
                 }
                 else{
-                    Vptrs[idx] = &this->vert_arr.at(localVIndex);
+                    Vptrs[idx] = localVIndex;
                 }
             }
             
@@ -330,6 +291,7 @@ void Triangulation::mesher(double r, int degree){
             
             Triangle tr4 = Triangle(this->globalIndex + 4, Vptrs[0], Vptrs[1], Vptrs[2], t.index);
             
+            t.childInd.clear();
             t.childInd.push_back(tr1.index);
             t.childInd.push_back(tr2.index);
             t.childInd.push_back(tr3.index);
@@ -338,25 +300,16 @@ void Triangulation::mesher(double r, int degree){
             all_triangles.at(iter).insert(all_triangles.at(iter).end(), tr2);
             all_triangles.at(iter).insert(all_triangles.at(iter).end(), tr3);
             all_triangles.at(iter).insert(all_triangles.at(iter).end(), tr4);
-            
-            t.isDone = true;
             this->globalIndex = this->globalIndex + 4;
-            
-            //auto newTriangles = trCreator(&t, Vptrs);
-            //all_triangles.at(iter).insert(all_triangles.at(iter).end(), newTriangles.begin(), newTriangles.end());
         }
-        tr_arr.insert(tr_arr.end(), all_triangles.at(iter).begin(), all_triangles.at(iter).end());
+        tr_arr.insert(tr_arr.end(), all_triangles.at(iter-1).begin(), all_triangles.at(iter-1).end());
+        if(iter == degree){
+            tr_arr.insert(tr_arr.end(), all_triangles.at(iter).begin(), all_triangles.at(iter).end());
+        }
     }
 }
 
-
-
-
-
 void Triangulation::mesherDot(double r, int degree){
-    //PotentialCounter pc = {};
-    //pc.length = polynomDeg;
-    //pc.LoadFromFile("/Users/georgij/С++/Project/Project/data.txt");
     this->zeroMeshCreator(r);
     for(int iter = 1; iter <= degree; iter++)
     {
@@ -370,15 +323,12 @@ void Triangulation::mesherDot(double r, int degree){
                     VerticeWithCompared V2 = verticeCreator(tmpVertices[j], thirdVertice[i]);
                     VerticeWithCompared V3 = verticeCreator(closestVertices[l], thirdVertice[i]);
                     if(vertDetector(V1)){
-                        //V1.U = pc.potential(V1.r, V1.theta - pi/2, V1.fi - pi);
                         this->vert_arr.push_back(V1);
                     }
                     if(vertDetector(V2)){
-                        //V2.U = pc.potential(V2.r, V2.theta - pi/2, V2.fi - pi);
                         this->vert_arr.push_back(V2);
                     }
                     if(vertDetector(V3)){
-                        //V3.U = pc.potential(V3.r, V3.theta - pi/2, V3.fi - pi);
                         this->vert_arr.push_back(V3);
                     }
                 }
@@ -387,33 +337,65 @@ void Triangulation::mesherDot(double r, int degree){
     }
 }
 
-
-void Triangulation::map(int degree, double r){
+void Triangulation::map(int degree, int polynomDegree, int maxRad, int step){
     PotentialCounter pc = {};
-    pc.length = 100;
+    pc.length = polynomDegree;
     pc.LoadFromFile("/Users/georgij/С++/Project/Project/data.txt");
+    
+    string deg  = to_string(degree);
+    string polD = to_string(polynomDegree);
+    string st   = to_string(step);
+    ofstream infileV;
+    infileV.open("v_"+deg+"_"+polD+"_"+st+".txt", std::ios_base::app);
+    ofstream infile("Triangles_" + deg + ".txt");
+    cout<<"Map in progress:"<<endl;
     time_t start, end;
     time(&start);
-    cout<<"work on map with degree "<<degree<<" and r = "<<r<<" started"<<endl;
-    this->mesher(r, degree);
-    this->vert_arr.clear();
-    cout<<"mesh is ready, counting potentials"<<endl;
-    string rad = to_string(int(r));
-    string deg = to_string(degree);
-    ofstream infile(rad+"_"+deg+".txt");
+    
+    cout<<"Counting triangles with degree "<<degree<<endl;
+    this->mesher(r0, degree);
     for (int j = 0; j < this->tr_arr.size(); j++)
     {
-        for(int i=0; i<3; i++){
-            //this->tr_arr[j].V[i]->U = pc.potential(this->tr_arr[j].V[i]->r, this->tr_arr[j].V[i]->theta - pi/2,
-            //                                       this->tr_arr[j].V[i]->fi - pi);
-            infile<<this->tr_arr[j].V[i]->U<<" "<<this->tr_arr[j].V[i]->r<<" "<<this->tr_arr[j].V[i]->theta - pi/2<<" "<<
-                    this->tr_arr[j].V[i]->fi - pi <<"\n";
+        infile<<this->tr_arr[j].index<<" "<<this->tr_arr[j].fatherInd<<" ";
+        for(int k=0; k<4; k++){
+            infile<<this->tr_arr[j].childInd[k]<<" ";
         }
+        for(int i=0; i<3; i++){
+            infile<<this->vert_arr.at(this->tr_arr[j].V[i]).index<<" ";
+        }
+        infile<<"\n";
     }
-    infile << endl;
+    
+    infile<<endl;
     infile.close();
+    
+    cout<<"Meshing..."<<endl;
+     
+    for(int r=r0; r<=maxRad; r+= step){
+        time_t oneMapSt, oneMapF;
+        time(&oneMapSt);
+        this->mesher(r, degree);
+        cout<<"Counting potentials on rad "<<r<<endl;
+
+        for(int i=0; i<this->vert_arr.size(); i++){
+            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta, this->vert_arr[i].fi);
+            infileV<<this->vert_arr[i].index <<" "<<
+                     this->vert_arr[i].U     <<" "<<
+                     this->vert_arr[i].r     <<" "<<
+                     this->vert_arr[i].theta <<" "<<
+                     this->vert_arr[i].fi    <<" "<<
+                     this->vert_arr[i].x     <<" "<<
+                     this->vert_arr[i].y     <<" "<<
+                     this->vert_arr[i].z     <<"\n";
+            
+        }
+        
+        time(&oneMapF);
+        cout<<"Map with rad "<<r<<" is done in "<<difftime(oneMapF, oneMapSt)/60.0<<" min"<<endl;
+    }
+    infileV.close();
     time(&end);
-    printf("Completed in %f min\n", difftime(end, start)/60.0);
+    cout<<"Global map is done in "<<difftime(end, start)/60.0<<" min"<<endl;
 }
 
 void Triangulation::globalMapDot(int degree, int polynomDegree, int maxRad, int step){
@@ -436,11 +418,12 @@ void Triangulation::globalMapDot(int degree, int polynomDegree, int maxRad, int 
         this->mesherDot(r, degree);
         cout<<"Counting potentials on rad "<<r<<endl;
         for(int i=0; i<this->vert_arr.size(); i++){
-            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi - pi);
-            infile<<this->vert_arr[i].U<<" "<<
-                    this->vert_arr[i].r<<" "<<
-                    this->vert_arr[i].theta - pi/2<<" "<<
-                    this->vert_arr[i].fi - pi<<"\n";
+            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta, this->vert_arr[i].fi);
+            infile<<this->vert_arr[i].index <<" "<<
+                    this->vert_arr[i].U     <<" "<<
+                    this->vert_arr[i].r     <<" "<<
+                    this->vert_arr[i].theta <<" "<<
+                    this->vert_arr[i].fi    <<"\n";
         }
         time(&oneMapF);
         cout<<"Map with rad "<<r<<" is done in "<<difftime(oneMapF, oneMapSt)/60.0<<" min"<<endl;

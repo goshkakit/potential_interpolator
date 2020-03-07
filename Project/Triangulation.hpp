@@ -38,17 +38,14 @@ public:
 
 class Triangle
 {
-public: vector<int> childInd ;
+public: vector<int> childInd = {-1, -1, -1, -1};
         Triangle();
         Triangle(int index, VerticeWithCompared* V1, VerticeWithCompared* V2, VerticeWithCompared* V3, int fatherIndex = -1);
+        Triangle(int index, int V1, int V2, int V3, int fatherIndex = -1);
         int index;
         int fatherInd;
-        bool isDone = false;
-        //vector<int> V;
-        vector<VerticeWithCompared*> V;
+        vector<int> V;
         bool operator == (const Triangle &tr) const;
-//private:
-  //      Triangle(const Triangle& T);
 };
 
 class Triangulation
@@ -62,7 +59,6 @@ public:
     int vIndex;
     int globalIndex;
     int localVIndex;
-    int localTrIndex;
     void mesher(double r, int degree);
     void mesherDot(double r, int degree);
     vector<VerticeWithCompared> vert_arr;
@@ -70,9 +66,7 @@ public:
     vector<VerticeWithCompared> closestVerticesFinder(VerticeWithCompared V, vector<VerticeWithCompared> tmpVertices, int mode);
     VerticeWithCompared verticeCreator(VerticeWithCompared V1, VerticeWithCompared V2);
     bool vertDetector(VerticeWithCompared V);
-    void triangledetector(Triangle* tr, vector<Triangle> trArr);
-    vector<Triangle> trCreator(Triangle* fthrTr, VerticeWithCompared** V);
-    void map(int degree, double r);
+    void map(int degree, int polynomDegree, int maxRad, int step);
     void globalMapDot(int degree, int polynomDegree, int maxRad, int step);
 };
 
