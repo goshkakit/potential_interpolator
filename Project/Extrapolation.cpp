@@ -63,9 +63,9 @@ double Extrapolation::sphDist(double theta, double fi, int idx, int rIdx){
                 cos(fi - this->vert_arr.at(rIdx).at(idx).fi));
 }
 
-void Extrapolation::loader(int deg){
+void Extrapolation::loader(int deg, int maxR){
     string degree = to_string(deg);
-    this->radSet(6388100);
+    this->radSet(maxR);
     this->stepSet(100);
     if(deg == 6){
         this->vertAm = 40961;
@@ -101,17 +101,10 @@ int Extrapolation::searcher(int fthrIdx, int rIdx, double x, double y, double z)
 }
 
 bool Extrapolation::isInTr(int rIdx, int idx, double x, double y, double z){
-    //double A, B, C, lmbd, l, m, V1x, V1y, V1z, V2x, V2y, V2z;
-    
     Tr& t = this->tr_arr[idx];
     Vertice& V0 = this->vert_arr.at(rIdx).at(t.V[0]);
     Vertice& V1 = this->vert_arr.at(rIdx).at(t.V[1]);
     Vertice& V2 = this->vert_arr.at(rIdx).at(t.V[2]);
-    
-    //cout<<x<<" "<<y<<" "<<z<<"\n";
-    //cout<<V0.x<<" "<<V0.y<<" "<<V0.z<<"\n";
-    //cout<<V1.x<<" "<<V1.y<<" "<<V1.z<<"\n";
-    //cout<<V2.x<<" "<<V2.y<<" "<<V2.z<<"\n";
     
     double delta = V0.x * (V1.y * V2.z - V2.y * V1.z) - V1.x * (V0.y * V2.z - V2.y * V0.z) + V2.x * (V0.y * V1.z - V1.y * V0.z);
     double deltaX = x * (V1.y * V2.z - V2.y * V1.z) - V1.x * (y * V2.z - V2.y * z) + V2.x * (y * V1.z - V1.y * z);
@@ -125,37 +118,6 @@ bool Extrapolation::isInTr(int rIdx, int idx, double x, double y, double z){
     
     if(a > 0 && b > 0 && c > 0 && lmbd > 0)
         return true;
-    
-    /*
-    A = ((V1.y - V0.y) * (V2.z - V0.z) - (V2.y - V0.y) * (V1.z - V0.z));
-    B = ((V1.x - V0.x) * (V2.z - V0.z) - (V2.x - V0.x) * (V1.z - V0.z));
-    C = ((V1.x - V0.x) * (V2.y - V0.y) - (V2.x - V0.x) * (V1.y - V0.y));
-    
-    lmbd = (V0.x * A - V0.y * B + V0.z * C) / (x * A - y * B + z * C);
-    
-    x *= lmbd;
-    y *= lmbd;
-    z *= lmbd;
-    
-    V1x = V1.x - V0.x;
-    V1y = V1.y - V0.y;
-    V1z = V1.z - V0.z;
-    V2x = V2.x - V0.x;
-    V2y = V2.y - V0.y;
-    V2z = V2.z - V0.z;
-    x -= V0.x;
-    y -= V0.y;
-    z -= V0.z;
-    
-    l = (x * V1x + y * V1y + z * V1z) / (V1x * V1x + V1y * V1y + V1z * V1z);
-    
-    if(l >= 0 && l <= 1){
-        m = (x * V2x + y * V2y + z * V2z) / (V2x * V2x + V2y * V2y + V2z * V2z);
-        if(m >= 0 && (l + m <= 1)){
-            return true;
-        }
-    }
-     */
     return false;
 }
 
@@ -174,47 +136,47 @@ double Extrapolation::layerCounter(double theta, double fi, int trIdx, int rIdx)
 }
 
 double Extrapolation::counter(double r, double theta, double fi, int tr, int rIdx){
+    //double delta = 1e-10;
+    //double U1 = layerCounter(theta, fi, tr, rIdx);
+    //double U2 = layerCounter(theta, fi, tr, rIdx + 1);
+    //double w1 = 1 / (abs(r - (r0 + (stepRad * rIdx))) + delta);
+    //double w2 = 1 / (abs(r0 + (stepRad * (rIdx + 1)) - r) + delta);
+    //double U = (U2 * w1 + U1 * w2) / (w1 + w2);
+    //return U;
+    
+    
     //.....U3..U1..U..U2..U4..
+    double delta = 1e-10;
+    double U1, U2, U3, U4, U, w1, w2;
+    U1 = layerCounter(theta, fi, tr, rIdx);
+    U2 = layerCounter(theta, fi, tr, rIdx + 1);
+    U4 = layerCounter(theta, fi, tr, rIdx + 2);
+    w1 = 1 / (abs(r - (r0 + (stepRad * rIdx))) + delta);
+    w2 = 1 / (abs(r0 + (stepRad * (rIdx + 1)) - r) + delta);
+    U = (U2 * w1 + U1 * w2) / (w1 + w2);
+    
+    double d1, d2, d3, d4;
+    d1 = 1 / (abs(U   -   U1) + delta);
+    d2 = 1 / (abs(U2  -   U)  + delta);
+    d4 = 1 / (abs(U4  -   U)  + delta);
+    
     if(rIdx > 0){
-        double U1, U2, U3, U4, U, w1, w2;
-        U1 = layerCounter(theta, fi, tr, rIdx);
-        U2 = layerCounter(theta, fi, tr, rIdx + 1);
         U3 = layerCounter(theta, fi, tr, rIdx - 1);
-        U4 = layerCounter(theta, fi, tr, rIdx + 2);
-        w1 = (r - (r0 + (stepRad * rIdx))) / stepRad;
-        w2 = (r0 + (stepRad * (rIdx + 1)) - r) / stepRad;
-        U = (U2 * w1 + U1 * w2) / (w1 + w2);
-        
-        double delta = 1e-10, d1, d2, d3, d4;
-        d1 = 1 / (abs(U   -   U1) + delta);
-        d2 = 1 / (abs(U2  -   U)  + delta);
         d3 = 1 / (abs(U   -   U3) + delta);
-        d4 = 1 / (abs(U4  -   U)  + delta);
-        
         U = (U4 / d4 + U3 / d3 + U2 / d2 + U1 / d1) / (1 / d1 + 1 / d2 + 1 / d3 + 1 / d4);
-        return U;
     }
-    else{
-        double delta = 1e-10, U1, U2, U4, U, w1, w2;
-        U1 = layerCounter(theta, fi, tr, rIdx);
-        U2 = layerCounter(theta, fi, tr, rIdx + 1);
-        U4 = layerCounter(theta, fi, tr, rIdx + 2);
-        w1 = 1 / (abs(r - (r0 + (stepRad * rIdx))) + delta);
-        w2 = 1 / (abs(r0 + (stepRad * (rIdx + 1)) - r) + delta);
-        U = (U2 * w1 + U1 * w2) / (w1 + w2);
-        
-        double d1, d2, d4;
-        d1 = 1 / (abs(U   -   U1) + delta);
-        d2 = 1 / (abs(U2  -   U)  + delta);
-        d4 = 1 / (abs(U4  -   U)  + delta);
-        
+    else
         U = (U4 / d4 + U2 / d2 + U1 / d1) / (1 / d1 + 1 / d2 + 1 / d4);
-        return U;
-    }
+    return U;
+    
+
+     
 }
 
 double Extrapolation::extrapolator(double r, double theta, double fi){
     double U = 0;
+    theta += pi/2;
+    //fi -= pi;
     double x = r * sin(theta) * cos(fi);
     double y = r * sin(theta) * sin(fi);
     double z = r * cos(theta);

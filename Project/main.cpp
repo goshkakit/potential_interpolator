@@ -10,16 +10,17 @@
 #include "Triangulation.hpp"
 #include "PotentialCounter.h"
 #include "Extrapolation.hpp"
+#include "Acceleration.hpp"
 
 int main(int argc, const char * argv[]) {
     //Triangulation tr = {};
     //tr.mesher(r0, 3);
-    
+    //tr.mesherDot(r0, 6);
     //for(int i=0; i<tr.vert_arr.size(); i++){
     //    cout<<tr.vert_arr[i].r<<" "<<tr.vert_arr[i].theta<<" "<<tr.vert_arr[i].fi<<" "<<tr.vert_arr[i].U<<endl;
     //}
     //tr.map(3, r0);
-    //tr.map(6, 100, r0+4000, 100);
+    //tr.map(6, 100, r0+11000 , 100);
     //tr.zeroMeshCreator(7000000);
     //cout<<atan2(-1,-1)<<endl;
     /*
@@ -35,6 +36,7 @@ int main(int argc, const char * argv[]) {
     //PotentialCounter pc = {};
     //pc.length = 100;
     //pc.LoadFromFile("/Users/georgij/С++/Project/Project/data.txt");
+    //cout<<pc.potential(r0, 0.01, -0.01);
     //for(int r=r0; r<=r0+4000; r+=100){
     //for(int i=1; i<=5; i++){
     //    tr.map(6, r);
@@ -42,14 +44,14 @@ int main(int argc, const char * argv[]) {
     //}
     //}
     
-    Extrapolation ex = {};
+    //Extrapolation ex = {};
     //"v_6_100_6381600_100.txt"
     //"Triangles_6.txt"
     
-    ex.loader(6);
-    
-    cout<<ex.extrapolator(6378130, -0.0708, -3.0159)<<endl;
-    //cout<<pc.potential(6378130, -0.0708, -3.0159)<<endl;
+    //ex.loader(6, 6384100);
+    //
+    //cout<<ex.extrapolator(6380000, 0.254, -3.018)<<endl;
+    //cout<<pc.potential(   6380000, 0.254, -3.018)<<endl;
     /*
     for(int i=0; i<ex.vert_arr[0].size(); i++){
         cout<<ex.vert_arr[0][i].index<<" "<<ex.vert_arr[0][i].r<<" "<<ex.vert_arr[0][i].theta<<" "<<ex.vert_arr[0][i].fi<<" "<<ex.vert_arr[0][i].U<<endl;
@@ -61,7 +63,7 @@ int main(int argc, const char * argv[]) {
     }
      */
     /*
-    double r = 6378100, theta, fi, rmax = 6387900;
+    double r = 6378100, theta, fi, rmax = 6381900;
     
     std::mt19937_64 gen(time(0));
     std::uniform_real_distribution<> th_gen(-pi/2, pi/2);
@@ -98,5 +100,51 @@ int main(int argc, const char * argv[]) {
     infileE.close();
     
     cout<<"t_mean counted: "<<meanC<<"\n"<<"t_mean extrapolated: "<<meanE<<endl;
-     */
+    */
+    
+    Acceleration acc = {};
+    acc.dSet(0.1, 1e-6, 1e-6);
+    acc.countLoader();
+    //cout<<acc.g_C(6378150, -0.247854, 3.1168)<<endl;
+    acc.extrLoader();
+    //cout<<acc.g_E(6378150, -0.247854, 3.1168)<<endl;
+     
+    
+    double r = r0, theta, fi, rmax = r0+9000;
+    
+    std::mt19937_64 gen(time(0));
+    std::uniform_real_distribution<> th_gen(-pi/2, pi/2);
+    std::uniform_real_distribution<> fi_gen(-pi, pi);
+    theta = th_gen(gen);
+    fi = fi_gen(gen);
+    
+    ofstream infile("U_counted.txt");
+    ofstream infileE("U_extrapolated.txt");
+    int operations=0;
+    time_t startC, endC;
+    time(&startC);
+    for(int i = r; i< rmax; i+= 1){
+        operations++;
+        double a = acc.g_C(i, theta, fi);
+        infile<<a<<" ";
+    }
+    time(&endC);
+    double t_calc = difftime(endC, startC);
+    time_t endE;
+    for(int i = r; i< rmax; i+= 1){
+        double a = acc.g_E(i, theta, fi);
+        infileE<<a<<" ";
+    }
+    time(&endE);
+    double t_extr = difftime(endE, startC) - t_calc;
+    
+    cout<<"calc: "<<t_calc<<"; extr: "<<t_extr<<endl;
+    double meanC = t_calc / operations;
+    double meanE = t_extr / operations;
+    cout<<operations<<endl;
+    infile.close();
+    infileE.close();
+    
+    cout<<"t_mean counted: "<<meanC<<"\n"<<"t_mean extrapolated: "<<meanE<<endl;
+    
 }

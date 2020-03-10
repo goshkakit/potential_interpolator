@@ -26,29 +26,6 @@ void VerticeWithCompared::toSph()
         this->fi = 0;
     else
         this->fi = atan2(this->y, this->x);
-      /*
-        if(this->x == 0 && this->y < 0){
-        this->fi = 3*pi/2;
-    }
-    else if(this->x == 0 && this->y > 0){
-        this->fi = pi/2;
-    }
-    else if(this->x > 0 && this->y == 0){
-        this->fi = 0;
-    }
-    else if(this->x < 0 && this->y == 0){
-        this->fi = pi;
-    }
-    else if(this->x > 0 && this->y > 0){
-        this->fi = atan(this->y/this->x);
-    }
-    else if(this->x < 0){
-        this->fi = pi+atan(this->y/this->x);
-    }
-    else if(this->x > 0 && this->y < 0){
-        this->fi = 2*pi+atan(this->y/this->x);
-    }
-       */
 }
 
 bool VerticeWithCompared::operator<(const VerticeWithCompared &rht) const{
@@ -323,12 +300,18 @@ void Triangulation::mesherDot(double r, int degree){
                     VerticeWithCompared V2 = verticeCreator(tmpVertices[j], thirdVertice[i]);
                     VerticeWithCompared V3 = verticeCreator(closestVertices[l], thirdVertice[i]);
                     if(vertDetector(V1)){
+                        V1.index = this->vIndex;
+                        this->vIndex += 1;
                         this->vert_arr.push_back(V1);
                     }
                     if(vertDetector(V2)){
+                        V2.index = this->vIndex;
+                        this->vIndex += 1;
                         this->vert_arr.push_back(V2);
                     }
                     if(vertDetector(V3)){
+                        V3.index = this->vIndex;
+                        this->vIndex += 1;
                         this->vert_arr.push_back(V3);
                     }
                 }
@@ -347,11 +330,11 @@ void Triangulation::map(int degree, int polynomDegree, int maxRad, int step){
     string st   = to_string(step);
     ofstream infileV;
     infileV.open("v_"+deg+"_"+polD+"_"+st+".txt", std::ios_base::app);
-    ofstream infile("Triangles_" + deg + ".txt");
+    //ofstream infile("Triangles_" + deg + ".txt");
     cout<<"Map in progress:"<<endl;
     time_t start, end;
     time(&start);
-    
+    /*
     cout<<"Counting triangles with degree "<<degree<<endl;
     this->mesher(r0, degree);
     for (int j = 0; j < this->tr_arr.size(); j++)
@@ -370,23 +353,23 @@ void Triangulation::map(int degree, int polynomDegree, int maxRad, int step){
     infile.close();
     
     cout<<"Meshing..."<<endl;
-     
-    for(int r=r0; r<=maxRad; r+= step){
+     */
+    for(int r=6384200; r<=maxRad; r+= step){
         time_t oneMapSt, oneMapF;
         time(&oneMapSt);
         this->mesher(r, degree);
         cout<<"Counting potentials on rad "<<r<<endl;
 
         for(int i=0; i<this->vert_arr.size(); i++){
-            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta, this->vert_arr[i].fi);
-            infileV<<this->vert_arr[i].index <<" "<<
-                     this->vert_arr[i].U     <<" "<<
-                     this->vert_arr[i].r     <<" "<<
-                     this->vert_arr[i].theta <<" "<<
-                     this->vert_arr[i].fi    <<" "<<
-                     this->vert_arr[i].x     <<" "<<
-                     this->vert_arr[i].y     <<" "<<
-                     this->vert_arr[i].z     <<"\n";
+            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+            infileV<<this->vert_arr[i].index         <<" "<<
+                     this->vert_arr[i].U             <<" "<<
+                     this->vert_arr[i].r             <<" "<<
+                     this->vert_arr[i].theta - pi/2  <<" "<<
+                     this->vert_arr[i].fi + pi       <<" "<<
+                     this->vert_arr[i].x             <<" "<<
+                     this->vert_arr[i].y             <<" "<<
+                     this->vert_arr[i].z             <<"\n";
             
         }
         
@@ -418,12 +401,12 @@ void Triangulation::globalMapDot(int degree, int polynomDegree, int maxRad, int 
         this->mesherDot(r, degree);
         cout<<"Counting potentials on rad "<<r<<endl;
         for(int i=0; i<this->vert_arr.size(); i++){
-            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta, this->vert_arr[i].fi);
-            infile<<this->vert_arr[i].index <<" "<<
-                    this->vert_arr[i].U     <<" "<<
-                    this->vert_arr[i].r     <<" "<<
-                    this->vert_arr[i].theta <<" "<<
-                    this->vert_arr[i].fi    <<"\n";
+            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi - pi);
+            infile<<this->vert_arr[i].index         <<" "<<
+                    this->vert_arr[i].U             <<" "<<
+                    this->vert_arr[i].r             <<" "<<
+                    this->vert_arr[i].theta - pi/2  <<" "<<
+                    this->vert_arr[i].fi - pi       <<"\n";
         }
         time(&oneMapF);
         cout<<"Map with rad "<<r<<" is done in "<<difftime(oneMapF, oneMapSt)/60.0<<" min"<<endl;
