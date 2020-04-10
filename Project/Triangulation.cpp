@@ -170,39 +170,6 @@ void Triangulation::zeroMeshCreator(double r)
     this->zero_triangles();
 }
 
-vector<VerticeWithCompared> Triangulation::closestVerticesFinder(VerticeWithCompared V, vector<VerticeWithCompared> tmpVertices, int mode){
-    
-    for (auto &v: tmpVertices)
-        v.compared = &V;
-    vector<VerticeWithCompared> closestVertices;
-    
-    int verticesNum = 0;
-    if(mode == 1){
-        verticesNum = 2;
-    }
-    else{
-        for(int i = 0; i < 12; i++){
-            if(V.x == tmpVertices.at(i).x &&
-               V.y == tmpVertices.at(i).y &&
-               V.z == tmpVertices.at(i).z){
-                verticesNum = 5;
-                break;
-            }
-            else{
-                verticesNum = 6;
-            }
-        }
-    }
-    
-    sort(tmpVertices.begin(),tmpVertices.end());
-    
-    for(int k = 1; k <= verticesNum; k++){
-        closestVertices.push_back(tmpVertices.at(k));
-    }
-    
-    return closestVertices;
-}
-
 VerticeWithCompared Triangulation::verticeCreator(VerticeWithCompared V1, VerticeWithCompared V2){
     VerticeWithCompared newVertice;
     
@@ -286,55 +253,9 @@ void Triangulation::mesher(double r, int degree){
     }
 }
 
-void Triangulation::mesherDot(double r, int degree){
-    this->zeroMeshCreator(r);
-    for(int iter = 1; iter <= degree; iter++)
-    {
-        vector<VerticeWithCompared> tmpVertices = this->vert_arr;
-        for(int j = 0; j < tmpVertices.size(); j++){
-            vector<VerticeWithCompared> closestVertices = closestVerticesFinder(tmpVertices[j], tmpVertices, 0);
-            for(int l = 0; l < closestVertices.size(); l++){
-                vector<VerticeWithCompared> thirdVertice = closestVerticesFinder(closestVertices[l], closestVertices, 1);
-                for(int i = 0; i < thirdVertice.size(); i++){
-                    VerticeWithCompared V1 = verticeCreator(tmpVertices[j], closestVertices[l]);
-                    VerticeWithCompared V2 = verticeCreator(tmpVertices[j], thirdVertice[i]);
-                    VerticeWithCompared V3 = verticeCreator(closestVertices[l], thirdVertice[i]);
-                    if(vertDetector(V1)){
-                        V1.index = this->vIndex;
-                        this->vIndex += 1;
-                        this->vert_arr.push_back(V1);
-                    }
-                    if(vertDetector(V2)){
-                        V2.index = this->vIndex;
-                        this->vIndex += 1;
-                        this->vert_arr.push_back(V2);
-                    }
-                    if(vertDetector(V3)){
-                        V3.index = this->vIndex;
-                        this->vIndex += 1;
-                        this->vert_arr.push_back(V3);
-                    }
-                }
-            }
-        }
-    }
-}
-
-void Triangulation::map(int degree, int polynomDegree, int maxRad, int step){
-    PotentialCounter pc = {};
-    pc.length = polynomDegree;
-    pc.LoadFromFile("/Users/georgij/С++/Project/Project/data.txt");
-    
+void Triangulation::trianglesCreator(int degree){
     string deg  = to_string(degree);
-    string polD = to_string(polynomDegree);
-    string st   = to_string(step);
-    ofstream infileV;
-    infileV.open("v_"+deg+"_"+polD+"_"+st+".txt", std::ios_base::app);
-    //ofstream infile("Triangles_" + deg + ".txt");
-    cout<<"Map in progress:"<<endl;
-    time_t start, end;
-    time(&start);
-    /*
+    ofstream infile("Triangles_" + deg + ".txt");
     cout<<"Counting triangles with degree "<<degree<<endl;
     this->mesher(r0, degree);
     for (int j = 0; j < this->tr_arr.size(); j++)
@@ -352,67 +273,76 @@ void Triangulation::map(int degree, int polynomDegree, int maxRad, int step){
     infile<<endl;
     infile.close();
     
-    cout<<"Meshing..."<<endl;
-     */
-    for(int r=6384200; r<=maxRad; r+= step){
-        time_t oneMapSt, oneMapF;
-        time(&oneMapSt);
-        this->mesher(r, degree);
-        cout<<"Counting potentials on rad "<<r<<endl;
-
-        for(int i=0; i<this->vert_arr.size(); i++){
-            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
-            infileV<<this->vert_arr[i].index         <<" "<<
-                     this->vert_arr[i].U             <<" "<<
-                     this->vert_arr[i].r             <<" "<<
-                     this->vert_arr[i].theta - pi/2  <<" "<<
-                     this->vert_arr[i].fi + pi       <<" "<<
-                     this->vert_arr[i].x             <<" "<<
-                     this->vert_arr[i].y             <<" "<<
-                     this->vert_arr[i].z             <<"\n";
-            
-        }
-        
-        time(&oneMapF);
-        cout<<"Map with rad "<<r<<" is done in "<<difftime(oneMapF, oneMapSt)/60.0<<" min"<<endl;
-    }
-    infileV.close();
-    time(&end);
-    cout<<"Global map is done in "<<difftime(end, start)/60.0<<" min"<<endl;
+    cout<<"Triangles are done."<<endl;
 }
 
-void Triangulation::globalMapDot(int degree, int polynomDegree, int maxRad, int step){
+void Triangulation::map(int degree, int polynomDegree, int startRad, int maxRad, int step){
     PotentialCounter pc = {};
     pc.length = polynomDegree;
     pc.LoadFromFile("/Users/georgij/С++/Project/Project/data.txt");
     
     string deg  = to_string(degree);
     string polD = to_string(polynomDegree);
-    string maxR = to_string(maxRad);
     string st   = to_string(step);
-    ofstream infile(deg+"_"+polD+"_"+maxR+"_"+st+".txt");
-    cout<<"Map in progress:"<<endl;
-    time_t start, end;
-    time(&start);
-    
-    for(int r=r0; r<=maxRad; r+= step){
-        time_t oneMapSt, oneMapF;
-        time(&oneMapSt);
-        this->mesherDot(r, degree);
-        cout<<"Counting potentials on rad "<<r<<endl;
-        for(int i=0; i<this->vert_arr.size(); i++){
-            this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi - pi);
-            infile<<this->vert_arr[i].index         <<" "<<
-                    this->vert_arr[i].U             <<" "<<
-                    this->vert_arr[i].r             <<" "<<
-                    this->vert_arr[i].theta - pi/2  <<" "<<
-                    this->vert_arr[i].fi - pi       <<"\n";
+    string stR  = to_string(startRad);
+    string mxR  = to_string(maxRad);
+    ofstream infileV;
+    //one proc
+    if(omp_in_parallel() == 0){
+        infileV.open("v_A"+deg+"_"+polD+"_"+st+"_"+stR+"-"+mxR+".txt", std::ios_base::app);
+        cout<<"Map in progress"<<endl;
+        time_t start, end;
+        time(&start);
+        
+        //Uncomment if triangles are needed
+        //this->trianglesCreator(degree);
+        
+        for(int r=startRad; r<=maxRad; r+= step){
+            time_t oneMapSt, oneMapF;
+            time(&oneMapSt);
+            this->mesher(r, degree);
+            cout<<"Counting potentials on rad "<<r<<endl;
+            
+            for(int i=0; i<this->vert_arr.size(); i++){
+                this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                this->vert_arr[i].accR = pc.accR(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                this->vert_arr[i].accTh = pc.accTh(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                this->vert_arr[i].accFi = pc.accFi(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                infileV<<this->vert_arr[i].index         <<" "<<
+                     this->vert_arr[i].U             <<" "<<
+                     this->vert_arr[i].r             <<" "<<
+                     this->vert_arr[i].theta - pi/2  <<" "<<
+                     this->vert_arr[i].fi + pi       <<" "<<
+                     this->vert_arr[i].x             <<" "<<
+                     this->vert_arr[i].y             <<" "<<
+                     this->vert_arr[i].z             <<" "<<
+                     this->vert_arr[i].accR          <<" "<<
+                     this->vert_arr[i].accTh         <<" "<<
+                     this->vert_arr[i].accFi         <<"\n";
+            }
+            
+            time(&oneMapF);
+            cout<<"Map with rad "<<r<<" is done in "<<difftime(oneMapF, oneMapSt)/60.0<<" min"<<endl;
         }
-        time(&oneMapF);
-        cout<<"Map with rad "<<r<<" is done in "<<difftime(oneMapF, oneMapSt)/60.0<<" min"<<endl;
+        infileV.close();
+        time(&end);
+        cout<<"Global map is done in "<<difftime(end, start)/60.0<<" min"<<endl;
     }
-    infile.close();
-    time(&end);
-    cout<<"Global map is done in "<<difftime(end, start)/60.0<<" min"<<endl;
+    else{
+        string tN = to_string(omp_get_thread_num());
+        for(int r=startRad; r<=maxRad; r+= step){
+            clock_t start, end;
+            start = clock();
+            this->mesher(r, degree);
+            for(int i=0; i<this->vert_arr.size(); i++){
+                this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                this->vert_arr[i].accR = pc.accR(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                this->vert_arr[i].accTh = pc.accTh(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                this->vert_arr[i].accFi = pc.accFi(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+            }
+            this->parVertArr.push_back(this->vert_arr);
+            end = clock();
+            cout<<"Map on rad "<<r<<" is done by proc "<<tN<<" in "<<(double)(end - start)/(CLOCKS_PER_SEC*60)<<" min"<<endl;
+        }
+    }
 }
-

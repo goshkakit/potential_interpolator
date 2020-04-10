@@ -33,11 +33,6 @@ void PotentialCounter::LoadFromFile(string filename){
     }
 }
 
-void PotentialCounter::cleanData(){
-    delete[] data;
-    data = nullptr;
-}
-
 double PotentialCounter::Cnm(int n,int m){
     int index = (n+3)*(n-2)/2 + m ;
     return data[index].a;
@@ -60,7 +55,7 @@ long double PotentialCounter::coefCounter(int n, int m)
 }
 
 
-void PotentialCounter::LegendreCounter(int n, int m, long double x){
+void PotentialCounter::LegendreCounter(int n, int m, double x){
     double fact;
     int j;
     int k;
@@ -112,7 +107,37 @@ long double PotentialCounter::potential(double r, double fi, double lmbd){
             sum += this->partSumCounter(r, fi, lmbd, n, m);
         }
     }
-    return f_c*M_c*sum/r0;
+    return f_c * M_c * sum/r0;
+}
+
+double PotentialCounter::U0(double r){
+    return f_c * M_c / r;
+}
+
+double PotentialCounter::U2(double r, double theta, double fi){
+    return -f_c * M_c * J2 * r0 * r0 * (3* sin(theta) * sin(theta) - 1) / (2 * r * r * r) +
+            this->coefCounter(2, 1) * f_c * M_c * r0 * r0 * (-3 * sin(theta) * sqrt(1 - sin(theta) * sin(theta))) *
+                                      (Cnm(2, 1) * cos(fi) + Snm(2, 1) * sin(fi)) / (r * r * r) +
+            this->coefCounter(2, 2) * f_c * M_c * r0 * r0 * (3 * (1 - sin(theta) * sin(theta))) *
+                                      (Cnm(2, 2) * cos(2*fi) + Snm(2, 2) * sin(2*fi)) / (r * r * r);
+}
+
+double PotentialCounter::accR(double r, double theta, double fi){
+    double Up = U0(r + dR) + U2(r + dR, theta, fi) + this->potential(r + dR, theta, fi);
+    double Ul = U0(r)      + U2(r, theta, fi)      + this->potential(r,      theta, fi);
+    return (Up - Ul) / dR;
+}
+
+double PotentialCounter::accTh(double r, double theta, double fi){
+    double Up = U2(r, theta + dTh, fi) + this->potential(r, theta + dTh, fi);
+    double Ul = U2(r, theta      , fi) + this->potential(r, theta      , fi);
+    return (Up - Ul) / (r0*dTh);
+}
+
+double PotentialCounter::accFi(double r, double theta, double fi){
+    double Up = U2(r, theta, fi + dFi) + this->potential(r, theta, fi + dFi);
+    double Ul = U2(r, theta, fi) + this->potential(r, theta, fi);
+    return (Up - Ul) / (r0*dFi);
 }
 
 void PotentialCounter::Umap(){

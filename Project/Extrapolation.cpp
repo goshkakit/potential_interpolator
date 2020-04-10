@@ -9,7 +9,7 @@
 #include "Extrapolation.hpp"
 
 void Vertice::ReadFromStr(const char* str){
-    sscanf(str, "%d %lf %lf %lf %lf %lf %lf %lf", &index, &U, &r, &theta, &fi, &x, &y, &z);
+    sscanf(str, "%d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &index, &U, &r, &theta, &fi, &x, &y, &z, &accR, &accTh, &accFi);
 }
 
 void Tr::ReadFromStr(const char *str){
@@ -21,22 +21,23 @@ void Extrapolation::stepSet(int step){
     this->stepRad = step;
 }
 
-void Extrapolation::radSet(double r){
-    this->maxRad = r;
+void Extrapolation::radSet(int stR, int maxR){
+    this->startRad = stR;
+    this->maxRad = maxR;
 }
 
 void Extrapolation::verticeLoader(string filename){
     string line;
     ifstream in(filename);
     const char ch = '\n';
-    char mass[100] = {};
+    char mass[120] = {};
     for(int rad = 0; rad <= int((maxRad - r0)/stepRad); rad++) {
         vector<Vertice> v = {};
         this->vert_arr.push_back(v);
         for(int i = 0; i <= this->vertAm; i++){
             Vertice newVert;
-            memset(mass, 0, 100);
-            in.getline(mass, 99, ch);
+            memset(mass, 0, 120);
+            in.getline(mass, 119, ch);
             newVert.ReadFromStr(mass);
             this->vert_arr[rad].push_back(newVert);
         }
@@ -63,10 +64,15 @@ double Extrapolation::sphDist(double theta, double fi, int idx, int rIdx){
                 cos(fi - this->vert_arr.at(rIdx).at(idx).fi));
 }
 
-void Extrapolation::loader(int deg, int maxR){
+void Extrapolation::loader(int deg, int maxR, int step, int stR){
     string degree = to_string(deg);
-    this->radSet(maxR);
-    this->stepSet(100);
+    string st = to_string(step);
+    this->radSet(stR, maxR);
+    this->stepSet(step);
+    if(deg == 5){
+        this->vertAm = 10241;
+        this->trAm = 27299;
+    }
     if(deg == 6){
         this->vertAm = 40961;
         this->trAm = 109219;
@@ -75,7 +81,14 @@ void Extrapolation::loader(int deg, int maxR){
         this->vertAm = 163841;
         this->trAm = 436899;
     }
-    this->verticeLoader("v_" + degree + "_100_100.txt");
+    if(deg == 8){
+        this->vertAm = 655361;
+        this->trAm = 1747619;
+    }
+    if(startRad == r0)
+        this->verticeLoader("v_A" + degree + "_100_" + st +".txt");
+    else
+        this->verticeLoader("v_A" + degree + "_100_" + st+ "_" + to_string(startRad) + "-" + to_string(maxRad) + ".txt");
     this->triangleLoader("Triangles_" + degree + ".txt");
 }
 
@@ -89,15 +102,18 @@ int Extrapolation::zeroSearcher(int rIdx, double x, double y, double z){
 
 int Extrapolation::searcher(int fthrIdx, int rIdx, double x, double y, double z){
     Tr& t = this->tr_arr.at(fthrIdx);
+    int count = 0;
     if(t.childInd[0] != -1){
         for(int j=0; j<4; j++){
             if(isInTr(rIdx, t.childInd[j], x, y, z))
                 return searcher(t.childInd[j], rIdx, x, y, z);
+            else
+                count++;
         }
     }
     else
         return fthrIdx;
-    return -1;
+    return fthrIdx;
 }
 
 bool Extrapolation::isInTr(int rIdx, int idx, double x, double y, double z){
@@ -121,40 +137,67 @@ bool Extrapolation::isInTr(int rIdx, int idx, double x, double y, double z){
     return false;
 }
 
-double Extrapolation::layerCounter(double theta, double fi, int trIdx, int rIdx){
+vector<double> Extrapolation::layerCounter(double theta, double fi, int trIdx, int rIdx){
     double U = 0;
+    vector<double> res;
     Tr& t = this->tr_arr.at(trIdx);
     double delta = 1e-10;
     double d1 = sphDist(theta, fi, t.V[0], rIdx) + delta;
     double d2 = sphDist(theta, fi, t.V[1], rIdx) + delta;
     double d3 = sphDist(theta, fi, t.V[2], rIdx) + delta;
-    U =(this->vert_arr.at(rIdx).at(t.V[0]).U / d1 +
-        this->vert_arr.at(rIdx).at(t.V[1]).U / d2 +
-        this->vert_arr.at(rIdx).at(t.V[2]).U / d3) / (1 / d1 + 1 / d2 + 1 / d3);
-
-    return U;
+    U = (this->vert_arr.at(rIdx).at(t.V[0]).U / d1 +
+         this->vert_arr.at(rIdx).at(t.V[1]).U / d2 +
+         this->vert_arr.at(rIdx).at(t.V[2]).U / d3) / (1 / d1 + 1 / d2 + 1 / d3);
+    res.push_back(U);
+    
+    double accR = (this->vert_arr.at(rIdx).at(t.V[0]).accR / d1 +
+                   this->vert_arr.at(rIdx).at(t.V[1]).accR / d2 +
+                   this->vert_arr.at(rIdx).at(t.V[2]).accR / d3) / (1 / d1 + 1 / d2 + 1 / d3);
+    res.push_back(accR);
+    double accTh = (this->vert_arr.at(rIdx).at(t.V[0]).accTh / d1 +
+                    this->vert_arr.at(rIdx).at(t.V[1]).accTh / d2 +
+                    this->vert_arr.at(rIdx).at(t.V[2]).accTh / d3) / (1 / d1 + 1 / d2 + 1 / d3);
+    res.push_back(accTh);
+    double accFi = (this->vert_arr.at(rIdx).at(t.V[0]).accFi / d1 +
+                    this->vert_arr.at(rIdx).at(t.V[1]).accFi / d2 +
+                    this->vert_arr.at(rIdx).at(t.V[2]).accFi / d3) / (1 / d1 + 1 / d2 + 1 / d3);
+    res.push_back(accFi);
+    return res;
 }
 
-double Extrapolation::counter(double r, double theta, double fi, int tr, int rIdx){
-    //double delta = 1e-10;
-    //double U1 = layerCounter(theta, fi, tr, rIdx);
-    //double U2 = layerCounter(theta, fi, tr, rIdx + 1);
-    //double w1 = 1 / (abs(r - (r0 + (stepRad * rIdx))) + delta);
-    //double w2 = 1 / (abs(r0 + (stepRad * (rIdx + 1)) - r) + delta);
-    //double U = (U2 * w1 + U1 * w2) / (w1 + w2);
-    //return U;
-    
-    
-    //.....U3..U1..U..U2..U4..
+vector<double> Extrapolation::counter(double r, double theta, double fi, int tr, int rIdx){
+    vector<double> res, V1, V2;
     double delta = 1e-10;
-    double U1, U2, U3, U4, U, w1, w2;
-    U1 = layerCounter(theta, fi, tr, rIdx);
-    U2 = layerCounter(theta, fi, tr, rIdx + 1);
-    U4 = layerCounter(theta, fi, tr, rIdx + 2);
-    w1 = 1 / (abs(r - (r0 + (stepRad * rIdx))) + delta);
-    w2 = 1 / (abs(r0 + (stepRad * (rIdx + 1)) - r) + delta);
-    U = (U2 * w1 + U1 * w2) / (w1 + w2);
+    V1 = layerCounter(theta, fi, tr, rIdx);
+    double U1 = V1[0];
+    double accR1 = V1[1];
+    double accTh1 = V1[2];
+    double accFi1 = V1[3];
     
+    if(r != maxRad){
+        V2 = layerCounter(theta, fi, tr, rIdx + 1);
+        double U2 = V2[0];
+        double accR2 = V2[1];
+        double accTh2 = V2[2];
+        double accFi2 = V2[3];
+        double w1 = 1 / (abs(r - (r0 + (stepRad * rIdx))) + delta);
+        double w2 = 1 / (abs(r0 + (stepRad * (rIdx + 1)) - r) + delta);
+        double U = (U2 * w1 + U1 * w2) / (w1 + w2);
+        double accR = (accR2 * w1 + accR1 * w2) / (w1 + w2);
+        double accTh = (accTh2 * w1 + accTh1 * w2) / (w1 + w2);
+        double accFi = (accFi2 * w1 + accFi1 * w2) / (w1 + w2);
+        res.push_back(U);
+        res.push_back(accR);
+        res.push_back(accTh);
+        res.push_back(accFi);
+    }else{
+        res.push_back(U1);
+        res.push_back(accR1);
+        res.push_back(accTh1);
+        res.push_back(accFi1);
+    }
+    return res;
+    /*
     double d1, d2, d3, d4;
     d1 = 1 / (abs(U   -   U1) + delta);
     d2 = 1 / (abs(U2  -   U)  + delta);
@@ -167,23 +210,22 @@ double Extrapolation::counter(double r, double theta, double fi, int tr, int rId
     }
     else
         U = (U4 / d4 + U2 / d2 + U1 / d1) / (1 / d1 + 1 / d2 + 1 / d4);
-    return U;
+     */
     
-
-     
 }
 
-double Extrapolation::extrapolator(double r, double theta, double fi){
-    double U = 0;
+vector<double> Extrapolation::extrapolator(double r, double theta, double fi){
+    vector<double> V;
     theta += pi/2;
+    //For mapping uncomment:
     //fi -= pi;
     double x = r * sin(theta) * cos(fi);
     double y = r * sin(theta) * sin(fi);
     double z = r * cos(theta);
-    int rIdx = int(round((r-r0)/stepRad));
+    int rIdx = int(round((r-startRad)/stepRad));
     int zeroIdx = zeroSearcher(rIdx, x, y, z);
     int tr = searcher(zeroIdx, rIdx, x, y, z);
     
-    U = counter(r, theta, fi, tr, rIdx);
-    return U;
+    V = counter(r, theta, fi, tr, rIdx);
+    return V;
 }

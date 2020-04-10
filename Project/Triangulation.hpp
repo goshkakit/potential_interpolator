@@ -19,6 +19,7 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
+#include "omp.h"
 #include "PotentialCounter.h"
 
 using namespace std;
@@ -28,7 +29,7 @@ using namespace std;
 class VerticeWithCompared
 {
 public:
-    double x,y,z,r,theta,fi,U;
+    double x,y,z,r,theta,fi,U,accR,accTh,accFi;
     int index;
     VerticeWithCompared *compared;
     VerticeWithCompared(){};
@@ -60,14 +61,13 @@ public:
     int globalIndex;
     int localVIndex;
     void mesher(double r, int degree);
-    void mesherDot(double r, int degree);
     vector<VerticeWithCompared> vert_arr;
     vector<Triangle> tr_arr;
-    vector<VerticeWithCompared> closestVerticesFinder(VerticeWithCompared V, vector<VerticeWithCompared> tmpVertices, int mode);
+    vector<vector<VerticeWithCompared>> parVertArr;
     VerticeWithCompared verticeCreator(VerticeWithCompared V1, VerticeWithCompared V2);
     bool vertDetector(VerticeWithCompared V);
-    void map(int degree, int polynomDegree, int maxRad, int step);
-    void globalMapDot(int degree, int polynomDegree, int maxRad, int step);
+    void trianglesCreator(int degree);
+    void map(int degree, int polynomDegree, int startRad, int maxRad, int step);
 };
 
 #endif /* Triangulation_hpp */

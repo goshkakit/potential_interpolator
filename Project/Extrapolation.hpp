@@ -30,7 +30,7 @@ class Vertice
 {
 public:
     int index;
-    double U, r, theta, fi, x, y, z;
+    double U, r, theta, fi, x, y, z, accR, accTh, accFi;
     void ReadFromStr(const char* str);
 };
 
@@ -46,24 +46,25 @@ public:
 class Extrapolation{
 public:
     int stepRad;
-    double maxRad;
+    int startRad;
+    int maxRad;
     int trIdx;
     int vertAm;
     int trAm;
     void stepSet(int step);
-    void radSet(double r);
+    void radSet(int stR, int maxR);
     void verticeLoader(string filename);
     void triangleLoader(string filename);
     vector<vector<Vertice>> vert_arr;
     vector<Tr> tr_arr;
     double sphDist(double theta, double fi, int idx, int rIdx);
-    void loader(int deg, int maxR);
+    void loader(int deg, int maxR, int step, int stR=r0);
     int zeroSearcher(int rIdx, double x, double y, double z);
     int searcher(int fthrIdx, int rIdx, double x, double y, double z);
     bool isInTr(int rIdx, int idx, double x, double y, double z);
-    double layerCounter(double theta, double fi, int trIdx, int rIdx);
-    double counter(double r, double theta, double fi, int tr, int rIdx);
-    double extrapolator(double r, double theta, double fi);
+    vector<double> layerCounter(double theta, double fi, int trIdx, int rIdx);
+    vector<double> counter(double r, double theta, double fi, int tr, int rIdx);
+    vector<double> extrapolator(double r, double theta, double fi);
 };
 
 #endif /* Extrapolation_hpp */
