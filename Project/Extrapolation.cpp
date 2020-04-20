@@ -30,14 +30,14 @@ void Extrapolation::verticeLoader(string filename){
     string line;
     ifstream in(filename);
     const char ch = '\n';
-    char mass[120] = {};
-    for(int rad = 0; rad <= int((maxRad - r0)/stepRad); rad++) {
+    char mass[500] = {};
+    for(int rad = 0; rad <= int((maxRad - startRad)/stepRad); rad++) {
         vector<Vertice> v = {};
         this->vert_arr.push_back(v);
         for(int i = 0; i <= this->vertAm; i++){
             Vertice newVert;
-            memset(mass, 0, 120);
-            in.getline(mass, 119, ch);
+            memset(mass, 0, 500);
+            in.getline(mass, 499, ch);
             newVert.ReadFromStr(mass);
             this->vert_arr[rad].push_back(newVert);
         }
@@ -88,7 +88,7 @@ void Extrapolation::loader(int deg, int maxR, int step, int stR){
     if(startRad == r0)
         this->verticeLoader("v_A" + degree + "_100_" + st +".txt");
     else
-        this->verticeLoader("v_A" + degree + "_100_" + st+ "_" + to_string(startRad) + "-" + to_string(maxRad) + ".txt");
+        this->verticeLoader("v_A" + degree + "_100_" + st + "_" + to_string(startRad) + "-" + to_string(maxRad) + ".txt");
     this->triangleLoader("Triangles_" + degree + ".txt");
 }
 
@@ -222,7 +222,7 @@ vector<double> Extrapolation::extrapolator(double r, double theta, double fi){
     double x = r * sin(theta) * cos(fi);
     double y = r * sin(theta) * sin(fi);
     double z = r * cos(theta);
-    int rIdx = int(round((r-startRad)/stepRad));
+    int rIdx = int(floor((r-startRad)/stepRad));
     int zeroIdx = zeroSearcher(rIdx, x, y, z);
     int tr = searcher(zeroIdx, rIdx, x, y, z);
     

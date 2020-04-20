@@ -42,29 +42,31 @@ int main(int argc, const char * argv[]) {
         infile<<arr.at(i)<<" ";
     }
      */
-    
-    Triangulation tr = {};
-    tr.map(5, 100, r0+1000000, r0+1001000, 1000);
-    tr.map(6, 100, r0+1000000, r0+1001000, 1000);
-    tr.map(7, 100, r0+1000000, r0+1001000, 1000);
+    /*
+    Extrapolation ex = {};
+    ex.loader(8, 6579100, 1000, 6578100);
+    cout<<ex.extrapolator(6578503.7310264464, 0.24891772244761756, 3.5650866011713163)[0]<<endl;
+     */
+    //Triangulation tr = {};
+    //tr.map(8, 100, r0+1000000, r0+1001000, 1000);
     //ParallelTriangulation pTr = {};
     //pTr.parMap(2, 100, r0, r0+8000, 1000);
-    /*
+    
     PotentialCounter pc = {};
     pc.length = 100;
     pc.LoadFromFile("/Users/georgij/С++/Project/Project/data.txt");
     
     Extrapolation ex = {};
-    ex.loader(5, 6628100, 50000, 6578100);
+    ex.loader(8, 6579100, 1000, 6578100);
     
-    std::uniform_real_distribution<> r_gen(6578100, 6628100);
+    std::uniform_real_distribution<> r_gen(6578100, 6579100);
     std::uniform_real_distribution<> th_gen(-pi/2, pi/2);
     std::uniform_real_distribution<> fi_gen(0, 2*pi);
     std::mt19937_64 gen((int)time(0));
     double timeC = 0, timeE = 0;
     clock_t tC, tE;
-    ofstream infileV("random extrapolated 6.txt");
-    ofstream infileC("random counted 6.txt");
+    ofstream infileV("random extrapolated.txt");
+    ofstream infileC("random counted.txt");
     cout<<"Counting potentials"<<endl;
     for(int i=0; i<10000; i++){
         double r = r_gen(gen);
@@ -86,8 +88,8 @@ int main(int argc, const char * argv[]) {
         timeC += (double)tC / CLOCKS_PER_SEC;
         infileC<<U_pc<<" "<<aR<<" "<<aTh<<" "<<aFi<<" ";
     }
-    cout<<"E: "<<timeE<<"; C: "<<timeC<<endl;
-    */
+    cout<<timeE/timeC<<endl;
+    
     /*
     clock_t t, te;
     t = clock();
