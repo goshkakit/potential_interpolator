@@ -64,11 +64,15 @@ double Extrapolation::sphDist(double theta, double fi, int idx, int rIdx){
                 cos(fi - this->vert_arr.at(rIdx).at(idx).fi));
 }
 
-void Extrapolation::loader(int deg, int maxR, int step, int stR){
+void Extrapolation::loader(int pol, int deg, int maxR, int step, int stR){
     string degree = to_string(deg);
     string st = to_string(step);
     this->radSet(stR, maxR);
     this->stepSet(step);
+    if(deg == 4){
+        this->vertAm = 2561;
+        this->trAm = 6819;
+    }
     if(deg == 5){
         this->vertAm = 10241;
         this->trAm = 27299;
@@ -85,10 +89,10 @@ void Extrapolation::loader(int deg, int maxR, int step, int stR){
         this->vertAm = 655361;
         this->trAm = 1747619;
     }
-    if(startRad == r0)
-        this->verticeLoader("v_A" + degree + "_100_" + st +".txt");
-    else
-        this->verticeLoader("v_A" + degree + "_100_" + st + "_" + to_string(startRad) + "-" + to_string(maxRad) + ".txt");
+    //if(startRad == r0)
+    //    this->verticeLoader("v_A" + degree + "_100_" + st +".txt");
+    //else
+    this->verticeLoader("v_A" + degree + "_" + to_string(pol)+ "_" + st + "_" + to_string(startRad) + "-" + to_string(maxRad) + ".txt");
     this->triangleLoader("Triangles_" + degree + ".txt");
 }
 
@@ -180,12 +184,12 @@ vector<double> Extrapolation::counter(double r, double theta, double fi, int tr,
         double accR2 = V2[1];
         double accTh2 = V2[2];
         double accFi2 = V2[3];
-        double w1 = 1 / (abs(r - (r0 + (stepRad * rIdx))) + delta);
-        double w2 = 1 / (abs(r0 + (stepRad * (rIdx + 1)) - r) + delta);
-        double U = (U2 * w1 + U1 * w2) / (w1 + w2);
-        double accR = (accR2 * w1 + accR1 * w2) / (w1 + w2);
-        double accTh = (accTh2 * w1 + accTh1 * w2) / (w1 + w2);
-        double accFi = (accFi2 * w1 + accFi1 * w2) / (w1 + w2);
+        double w1 = 1 / (abs(r - (startRad + (stepRad * rIdx))) + delta);
+        double w2 = 1 / (abs(startRad + (stepRad * (rIdx + 1)) - r) + delta);
+        double U = (U1 * w1 + U2 * w2) / (w1 + w2);
+        double accR = (accR1 * w1 + accR2 * w2) / (w1 + w2);
+        double accTh = (accTh1 * w1 + accTh2 * w2) / (w1 + w2);
+        double accFi = (accFi1 * w1 + accFi2 * w2) / (w1 + w2);
         res.push_back(U);
         res.push_back(accR);
         res.push_back(accTh);

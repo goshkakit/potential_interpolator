@@ -309,16 +309,16 @@ void Triangulation::map(int degree, int polynomDegree, int startRad, int maxRad,
                 this->vert_arr[i].accTh = pc.accTh(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
                 this->vert_arr[i].accFi = pc.accFi(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
                 infileV<<this->vert_arr[i].index         <<" "<<
-                     this->vert_arr[i].U             <<" "<<
-                     this->vert_arr[i].r             <<" "<<
-                     this->vert_arr[i].theta - pi/2  <<" "<<
-                     this->vert_arr[i].fi + pi       <<" "<<
-                     this->vert_arr[i].x             <<" "<<
-                     this->vert_arr[i].y             <<" "<<
-                     this->vert_arr[i].z             <<" "<<
-                     this->vert_arr[i].accR          <<" "<<
-                     this->vert_arr[i].accTh         <<" "<<
-                     this->vert_arr[i].accFi         <<"\n";
+                         this->vert_arr[i].U             <<" "<<
+                         this->vert_arr[i].r             <<" "<<
+                         this->vert_arr[i].theta - pi/2  <<" "<<
+                         this->vert_arr[i].fi + pi       <<" "<<
+                         this->vert_arr[i].x             <<" "<<
+                         this->vert_arr[i].y             <<" "<<
+                         this->vert_arr[i].z             <<" "<<
+                         this->vert_arr[i].accR          <<" "<<
+                         this->vert_arr[i].accTh         <<" "<<
+                         this->vert_arr[i].accFi         <<"\n";
             }
             
             time(&oneMapF);
@@ -335,10 +335,10 @@ void Triangulation::map(int degree, int polynomDegree, int startRad, int maxRad,
             start = clock();
             this->mesher(r, degree);
             for(int i=0; i<this->vert_arr.size(); i++){
-                this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
-                this->vert_arr[i].accR = pc.accR(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
-                this->vert_arr[i].accTh = pc.accTh(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
-                this->vert_arr[i].accFi = pc.accFi(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                           this->vert_arr[i].U = pc.potential(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                           this->vert_arr[i].accR = pc.accR(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                           this->vert_arr[i].accTh = pc.accTh(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
+                           this->vert_arr[i].accFi = pc.accFi(this->vert_arr[i].r, this->vert_arr[i].theta - pi/2, this->vert_arr[i].fi);
             }
             this->parVertArr.push_back(this->vert_arr);
             end = clock();

@@ -58,7 +58,7 @@ public:
     vector<vector<Vertice>> vert_arr;
     vector<Tr> tr_arr;
     double sphDist(double theta, double fi, int idx, int rIdx);
-    void loader(int deg, int maxR, int step, int stR=r0);
+    void loader(int pol, int deg, int maxR, int step, int stR=r0);
     int zeroSearcher(int rIdx, double x, double y, double z);
     int searcher(int fthrIdx, int rIdx, double x, double y, double z);
     bool isInTr(int rIdx, int idx, double x, double y, double z);
