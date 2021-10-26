@@ -1,1 +1,1 @@
-# potential_interpolator and astronomy stuff
+# potential interpolator and astronomy stuff
